@@ -1,0 +1,91 @@
+services:
+  # Rust Server A (Port 8001)
+  bibliogenius-a:
+    build:
+      context: ../bibliogenius
+      dockerfile: Dockerfile
+    container_name: bibliogenius-a
+    ports:
+      - "8001:8000"
+    environment:
+      - DATABASE_URL=sqlite:///app/data/bibliogenius.db?mode=rwc
+      - PORT=8000
+      - HUB_URL=http://hub:80
+    volumes:
+      - bibliogenius-a-data:/app/data
+    networks:
+      - bibliogenius-network
+    restart: unless-stopped
+
+  # Rust Server B (Port 8002) - for P2P testing
+  bibliogenius-b:
+    build:
+      context: ../bibliogenius
+      dockerfile: Dockerfile
+    container_name: bibliogenius-b
+    ports:
+      - "8002:8000"
+    environment:
+      - DATABASE_URL=sqlite:///app/data/bibliogenius.db?mode=rwc
+      - PORT=8000
+      - HUB_URL=http://hub:80
+    volumes:
+      - bibliogenius-b-data:/app/data
+    networks:
+      - bibliogenius-network
+    restart: unless-stopped
+
+  # Symfony Hub with FrankenPHP (Port 8080)
+  hub:
+    build:
+      context: ../bibliogenius-hub
+      dockerfile: Dockerfile
+    container_name: bibliogenius-hub
+    ports:
+      - "8080:80"
+    volumes:
+      - ../bibliogenius-hub/src:/app/src
+      - ../bibliogenius-hub/config:/app/config
+      - ../bibliogenius-hub/public:/app/public
+      - ../bibliogenius-hub/templates:/app/templates
+      - ../bibliogenius-hub/bin:/app/bin
+      - ../bibliogenius-hub/.env:/app/.env
+    environment:
+      - APP_ENV=dev
+      - APP_SECRET=change_this_in_production
+      - DATABASE_URL=sqlite:////app/var/data/hub.db
+      - SERVER_NAME=:80
+    networks:
+      - bibliogenius-network
+    restart: unless-stopped
+
+  builder:
+    build:
+      context: ../bibliogenius
+      dockerfile: Dockerfile
+      target: builder
+    container_name: bibliogenius-builder
+    volumes:
+      - ../bibliogenius:/app
+    working_dir: /app
+    command: cargo fetch
+
+  flutter:
+    image: ghcr.io/cirruslabs/flutter:stable
+    container_name: bibliogenius-flutter
+    volumes:
+      - ../bibliogenius-app:/app
+    working_dir: /app
+    ports:
+      - "8083:8083"
+
+volumes:
+  bibliogenius-a-data:
+  bibliogenius-b-data:
+
+
+networks:
+  bibliogenius-network:
+    driver: bridge
+
+# builder service moved to services section (removed from networks)
