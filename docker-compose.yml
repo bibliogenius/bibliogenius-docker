@@ -44,12 +44,7 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - ../bibliogenius-hub/src:/app/src
-      - ../bibliogenius-hub/config:/app/config
-      - ../bibliogenius-hub/public:/app/public
-      - ../bibliogenius-hub/templates:/app/templates
-      - ../bibliogenius-hub/bin:/app/bin
-      - ../bibliogenius-hub/.env:/app/.env
+      - ../bibliogenius-hub:/app
     environment:
       - APP_ENV=dev
       - APP_SECRET=change_this_in_production
