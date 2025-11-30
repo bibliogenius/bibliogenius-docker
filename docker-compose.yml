@@ -42,7 +42,7 @@ services:
       dockerfile: Dockerfile
     container_name: bibliogenius-hub
     ports:
-      - "8080:80"
+      - "8081:80"
     volumes:
       - ../bibliogenius-hub:/app
     environment:
@@ -50,6 +50,8 @@ services:
       - APP_SECRET=change_this_in_production
       - DATABASE_URL=sqlite:////app/var/data/hub.db
       - SERVER_NAME=:80
+      - DEFAULT_URI=http://localhost
+      - CORS_ALLOW_ORIGIN=^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$
     networks:
       - bibliogenius-network
     restart: unless-stopped
