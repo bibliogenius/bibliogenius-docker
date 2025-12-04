@@ -97,6 +97,7 @@ services:
     container_name: bibliogenius-flutter
     volumes:
       - ../bibliogenius-app:/app
+      - ../bibliogenius-app/.env.b:/app/.env
     working_dir: /app
     ports:
       - "8083:8083"
