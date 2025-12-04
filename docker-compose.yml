@@ -10,7 +10,7 @@ services:
     environment:
       - DATABASE_URL=sqlite:///app/data/bibliogenius.db?mode=rwc
       - PORT=8000
-      - HUB_URL=http://hub:80
+      - HUB_URL=http://hub-a:80
     volumes:
       - bibliogenius-a-data:/app/data
     networks:
@@ -28,30 +28,55 @@ services:
     environment:
       - DATABASE_URL=sqlite:///app/data/bibliogenius.db?mode=rwc
       - PORT=8000
-      - HUB_URL=http://hub:80
+      - HUB_URL=http://hub-b:80
     volumes:
       - bibliogenius-b-data:/app/data
     networks:
       - bibliogenius-network
     restart: unless-stopped
 
-  # Symfony Hub with FrankenPHP (Port 8080)
-  hub:
+  # Symfony Hub A with FrankenPHP (for bibliogenius-a)
+  hub-a:
     build:
       context: ../bibliogenius-hub
       dockerfile: Dockerfile
-    container_name: bibliogenius-hub
+    container_name: bibliogenius-hub-a
     ports:
       - "8081:80"
     volumes:
       - ../bibliogenius-hub:/app
+      - hub-a-data:/app/var/data
     environment:
       - APP_ENV=dev
-      - APP_SECRET=change_this_in_production
-      - DATABASE_URL=sqlite:////app/var/data/hub.db
+      - APP_SECRET=change_this_in_production_a
+      - DATABASE_URL=sqlite:////app/var/data/hub-a.db
       - SERVER_NAME=:80
       - DEFAULT_URI=http://localhost
       - CORS_ALLOW_ORIGIN=^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$
+      - MY_LIBRARY_URL=http://bibliogenius-a:8000
+    networks:
+      - bibliogenius-network
+    restart: unless-stopped
+
+  # Symfony Hub B with FrankenPHP (for bibliogenius-b)
+  hub-b:
+    build:
+      context: ../bibliogenius-hub
+      dockerfile: Dockerfile
+    container_name: bibliogenius-hub-b
+    ports:
+      - "8082:80"
+    volumes:
+      - ../bibliogenius-hub:/app
+      - hub-b-data:/app/var/data
+    environment:
+      - APP_ENV=dev
+      - APP_SECRET=change_this_in_production_b
+      - DATABASE_URL=sqlite:////app/var/data/hub-b.db
+      - SERVER_NAME=:80
+      - DEFAULT_URI=http://localhost
+      - CORS_ALLOW_ORIGIN=^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$
+      - MY_LIBRARY_URL=http://bibliogenius-b:8000
     networks:
       - bibliogenius-network
     restart: unless-stopped
@@ -79,6 +104,8 @@ services:
 volumes:
   bibliogenius-a-data:
   bibliogenius-b-data:
+  hub-a-data:
+  hub-b-data:
 
 
 networks:
