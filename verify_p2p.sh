@@ -55,15 +55,26 @@ fi
 echo -e "\n🔎 5. Verifying Remote Search (Node B -> Node A)..."
 
 # First, connect Node B to Node A (so B knows about A)
+# Internal URL for Docker container-to-container communication
+NODE_A_INTERNAL_URL="http://bibliogenius-a:8000"
+
 echo "Connecting Node B to Node A..."
 CONNECT_RESPONSE=$(curl -s -X POST "$NODE_B_URL/api/peers/connect" \
   -H "Content-Type: application/json" \
-  -d "{\"name\": \"Node A\", \"url\": \"$NODE_A_URL\"}")
+  -d "{\"name\": \"Node A\", \"url\": \"$NODE_A_INTERNAL_URL\"}")
+
 PEER_ID=$(echo $CONNECT_RESPONSE | grep -o '"id":[0-9]*' | cut -d':' -f2)
-echo "Connected. Peer ID: $PEER_ID"
 
 if [ -z "$PEER_ID" ]; then
-    echo "❌ Failed to connect Node B to Node A"
+    echo "⚠️  Connection failed or peer exists. Attempting to find existing peer..."
+    # Fallback: Find existing peer by URL using jq
+    PEER_ID=$(curl -s "$NODE_B_URL/api/peers" | jq -r ".[] | select(.url == \"$NODE_A_INTERNAL_URL\") | .id")
+fi
+
+echo "Connected/Found. Peer ID: $PEER_ID"
+
+if [ -z "$PEER_ID" ]; then
+    echo "❌ Failed to connect or find Node A"
     exit 1
 fi
 
